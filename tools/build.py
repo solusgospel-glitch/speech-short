@@ -17,6 +17,7 @@ W, H = 1080, 1920
 FG_H = 1215  # foreground height (crop 640x720 -> 1080x1215)
 CROP_W, CROP_X = 640, 410
 FONT = "NanumSquare"
+BLACK = os.environ.get("THEME") == "black"  # black background, white text
 
 
 def slide_ranges(s, e):
@@ -32,6 +33,16 @@ def slide_ranges(s, e):
         if not x and a is not None:
             out.append((a, i / 4 + 0.25)); a = None
     return out
+
+
+SUB_STYLE = (
+    f"Style: Sub,{FONT},70,&H00FFFFFF&,&H00000000&,&H00000000&,&H00000000&,1,0,0,0,100,100,0,0,1,0,0,5,70,70,0,1"
+    if BLACK else
+    f"Style: Sub,{FONT},66,&H00402010&,&H00000000&,&H00FFFFFF&,&H00FFFFFF&,1,0,0,0,100,100,0,0,3,18,0,5,70,70,0,1")
+TITLE_STYLE = (
+    f"Style: Title,{FONT},72,&H00FFFFFF&,&H00000000&,&H00000000&,&H00000000&,1,0,0,0,100,100,2,0,1,5,0,8,60,60,80,1"
+    if BLACK else
+    f"Style: Title,{FONT},72,&H00FFFFFF&,&H00000000&,&H00502010&,&H00000000&,1,0,0,0,100,100,2,0,1,6,0,8,60,60,80,1")
 
 
 def ts(t):
@@ -51,8 +62,8 @@ WrapStyle: 0
 
 [V4+ Styles]
 Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding
-Style: Sub,{FONT},66,&H00402010&,&H00000000&,&H00FFFFFF&,&H00FFFFFF&,1,0,0,0,100,100,0,0,3,18,0,5,70,70,0,1
-Style: Title,{FONT},72,&H00FFFFFF&,&H00000000&,&H00502010&,&H00000000&,1,0,0,0,100,100,2,0,1,6,0,8,60,60,80,1
+{SUB_STYLE}
+{TITLE_STYLE}
 
 [Events]
 Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
@@ -68,17 +79,19 @@ Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
     on_slide = "+".join(f"between(t,{a:.2f},{z:.2f})" for a, z in sl) or "0"
     print("  slide ranges:", [(round(a, 1), round(z, 1)) for a, z in sl], flush=True)
     FIT_H = int(W * 9 / 16)
+    BG_BLACK = f",drawbox=x=0:y=0:w={W}:h={H}:color=black:t=fill" if BLACK else ""
+    BAND = "" if BLACK else f"drawbox=x=0:y={FG_H}:w={W}:h={H-FG_H}:color=white@0.55:t=fill,"
     vf = (
         f"[0:v]split=3[a][b][c];"
         # background: blurred, brightened full frame filling the canvas
         f"[a]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},boxblur=40:8,"
-        f"eq=brightness=0.18:saturation=1.1:contrast=0.95,colorlevels=rimin=0:gimin=0:bimin=0[bg];"
+        f"eq=brightness=0.18:saturation=1.1:contrast=0.95,colorlevels=rimin=0:gimin=0:bimin=0{BG_BLACK}[bg];"
         # foreground: preacher crop, brightened
         f"[b]crop={CROP_W}:720:{CROP_X}:0,scale={W}:{FG_H}:flags=lanczos,"
         f"eq=brightness=0.10:contrast=1.08:saturation=1.12:gamma=1.15[fg];"
         f"[c]scale={W}:{FIT_H}:flags=lanczos,eq=brightness=0.02[fit];"
         f"[bg][fg]overlay=0:0:enable='not({on_slide})'[o1];"
-        f"[o1][fit]overlay=0:{(FG_H-FIT_H)//2}:enable='{on_slide}',drawbox=x=0:y={FG_H}:w={W}:h={H-FG_H}:color=white@0.55:t=fill,"
+        f"[o1][fit]overlay=0:{(FG_H-FIT_H)//2}:enable='{on_slide}',{BAND}"
         f"ass={ass}:fontsdir=/usr/share/fonts[v]"
     )
     cmd = [

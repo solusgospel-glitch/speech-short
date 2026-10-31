@@ -21,3 +21,7 @@
 - `transcribe.py`: Whisper large-v3로 단어별 시간 인식
 - `prep.py`: 구간 선정, 오인식 교정, 실제 발화 시점에 자막 시간 맞춤
 - `build.py`: 세로 편집, 밝기 보정, 슬라이드 장면 자동 전환, 자막 합성
+
+## 추천 3선 (검정 바탕, 흰 글씨)
+`recommended/` 폴더. 같은 구간과 자막이며, 배경을 검정으로, 자막과 제목을 흰색으로 바꾼 버전입니다.
+`THEME=black python3 tools/build.py ... 6,7,10`으로 만들었습니다.
